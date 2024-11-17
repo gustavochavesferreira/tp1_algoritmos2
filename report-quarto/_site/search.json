@@ -1,0 +1,37 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "Relatório de Compressão e Descompressão com LZW",
+    "section": "",
+    "text": "Introdução\nMétodos\nResultados\nExecução\nConclusão\n\n\n\n\nO objetivo deste trabalho é avaliar a eficiência do algoritmo LZW em diferentes tipos de arquivos (texto, binário e imagem) e tamanhos (pequeno, médio e grande). A implementação foi instrumentada para registrar métricas de desempenho como taxa de compressão, tempo de execução e uso de memória.\n\n\n\nO LZW foi implementado em Python com suporte para: - Compressão e descompressão de arquivos. - Registro de métricas de desempenho em arquivos JSON. - Visualização dos resultados por meio de gráficos.\nOs tipos de arquivos testados incluem: - Textos (.txt). - Imagens bitmap (.bmp). - Arquivos binários (.bin).\nTamanhos dos arquivos: - Pequeno (~10 KB). - Médio (~1 MB). - Grande (&gt;10 MB).\n\n\n\nAs métricas coletadas incluem: - Taxa de compressão. - Tempo de compressão e descompressão. - Uso de memória. - Tamanho do dicionário.\n\n\n\n\n\n\n\nTaxa de Compressão\n\n\n\n\n\ntestando:\n\n\nWriting lzw.py"
+  },
+  {
+    "objectID": "index.html#tabela-de-conteúdo",
+    "href": "index.html#tabela-de-conteúdo",
+    "title": "Relatório de Compressão e Descompressão com LZW",
+    "section": "",
+    "text": "Introdução\nMétodos\nResultados\nExecução\nConclusão"
+  },
+  {
+    "objectID": "index.html#introdução",
+    "href": "index.html#introdução",
+    "title": "Relatório de Compressão e Descompressão com LZW",
+    "section": "",
+    "text": "O objetivo deste trabalho é avaliar a eficiência do algoritmo LZW em diferentes tipos de arquivos (texto, binário e imagem) e tamanhos (pequeno, médio e grande). A implementação foi instrumentada para registrar métricas de desempenho como taxa de compressão, tempo de execução e uso de memória."
+  },
+  {
+    "objectID": "index.html#métodos",
+    "href": "index.html#métodos",
+    "title": "Relatório de Compressão e Descompressão com LZW",
+    "section": "",
+    "text": "O LZW foi implementado em Python com suporte para: - Compressão e descompressão de arquivos. - Registro de métricas de desempenho em arquivos JSON. - Visualização dos resultados por meio de gráficos.\nOs tipos de arquivos testados incluem: - Textos (.txt). - Imagens bitmap (.bmp). - Arquivos binários (.bin).\nTamanhos dos arquivos: - Pequeno (~10 KB). - Médio (~1 MB). - Grande (&gt;10 MB)."
+  },
+  {
+    "objectID": "index.html#resultados",
+    "href": "index.html#resultados",
+    "title": "Relatório de Compressão e Descompressão com LZW",
+    "section": "",
+    "text": "As métricas coletadas incluem: - Taxa de compressão. - Tempo de compressão e descompressão. - Uso de memória. - Tamanho do dicionário.\n\n\n\n\n\n\n\nTaxa de Compressão\n\n\n\n\n\ntestando:\n\n\nWriting lzw.py"
+  }
+]
