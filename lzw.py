@@ -187,6 +187,12 @@ class CompactTrie:
       dot.render(filename, format="png", cleanup=True)
       print(f"Compact trie saved as {filename}.png")
 
+
+
+import os
+from typing import Tuple, List
+import struct
+
 # Para debug
 def binary_to_chars(binary_string):
     # Ensure the binary string length is a multiple of 8 (since each character is 8 bits)
@@ -258,10 +264,13 @@ class TrieLZW:
     compressed_data = []
     resets = []
 
+    count = 0
     # Aplicando a compressão LZW, considerando cada byte do arquivo original como um símbolo de entrada
     try:
       with open(file_path, "rb") as file:
         while (byte := file.read(1)):
+          #print(count)
+          count += 1
           symbol = bin(int.from_bytes(byte, "big"))[2:].zfill(8)
 
           string_plus_symbol = string + symbol
@@ -273,7 +282,8 @@ class TrieLZW:
             if(compression_type == "s"):
               if(dict_size == dict_size_limit - 1):
                 reset = True
-            # Expandindo os códigos no algoritmo dinâmico (até o limite)
+
+            # Expandindo os códigos no algoritmo dinâmico (até o limite) ou reiniciando o dicionário
             else:
               if(dict_size == (2 ** codes_max_size) - 1):
                 reset = True
@@ -293,11 +303,12 @@ class TrieLZW:
               reset = False
               dict_size = 256
 
-              if(compression_type != "s"):
+              if(compression_type != 's'):
                 num_bits_values = 9
                 next_dict_size_limit = 512
 
               dictionary = CompactTrie()
+
               for num in range(256):
                 byte_num = format(num, '08b')
                 dictionary.insert(byte_num, byte_num)
@@ -370,6 +381,7 @@ class TrieLZW:
 
     dict_size = 256 # O dicionário começa com todos os símbolos ASCII
     reset = False
+
     if(compression_type == "s"):
       decompression_size = 12 # Sempre puxaremos 12 bits do arquivo comprimido por vez no caso estático
       dict_size_limit = 2 ** decompression_size # Os 12 bits serão suficientes para representar códigos de 000000000000 (0) até 111111111111 (4095)
@@ -401,8 +413,11 @@ class TrieLZW:
     compressed_data = compressed_data[decompression_size:]
     decompressed_data = [string]
 
+    count = 0
     # Aplicando a descompressão LZW
     while(len(compressed_data) > 0):
+        #print(count)
+        count += 1
         if(compression_type == "s"):
           # Caso em que os códigos têm tamanho estático
           if(dict_size == dict_size_limit - 1):
@@ -410,6 +425,7 @@ class TrieLZW:
         else:
           # Caso em que os códigos têm tamanho dinâmico
           if(dict_size == 2 ** codes_max_size - 1):
+            decompression_size = 9
             reset = True
           else:
             if(dict_size == next_size_limit - 1):
@@ -465,7 +481,7 @@ class TrieLZW:
     # switch = {
     #     '.txt': write_txt_file,
     #     '.bmp': write_image_file,
-    #     '.tiff': write_image_file # Não sei se está funcionando
+    #     '.tiff': write_image_file
     #     }
     # handler = switch.get(original_file_extension)
     # if handler:
@@ -494,27 +510,123 @@ class TrieLZW:
     self.stats['memory_usage'] = peak_memory / 1024  # Converter para KB
     tracemalloc.stop()
 
+# Funções de Nível Superior para Compressão e Descompressão
+def compress(input_file, output_file, compression_type, max_bits, stats_file=None):
+    print(f"Compressão de '{input_file}'...")
+    trie_lzw = TrieLZW()
 
+    # Executa a compressão com os parâmetros especificados
+    file_name, file_extension = trie_lzw.compress(input_file, compression_type, max_bits)
+    compressed_file_name = f"compressed_{file_name}.bin"
+    print(f"Arquivo comprimido criado: {compressed_file_name}")
 
+    # Define output_file como o nome do arquivo comprimido gerado
+    output_file = compressed_file_name
+    print(f"Compressão concluída: {output_file}")
+
+    # Salva as estatísticas, se especificado
+    if stats_file:
+        with open(stats_file, 'w') as f:
+            json.dump(trie_lzw.stats, f, indent=4)
+        print(f"Estatísticas de compressão salvas em '{stats_file}'")
+
+def decompress(input_file, output_file, compression_type, max_bits, stats_file=None):
+    print(f"Descompressão de '{input_file}'...")
+    trie_lzw = TrieLZW()
+
+    # Extrai o nome base e a extensão do arquivo de saída desejado
+    output_base_name, output_extension = os.path.splitext(os.path.basename(output_file))
+    original_file_name = output_base_name.replace('decompressed_', '')
+
+    # Executa a descompressão
+    trie_lzw.decompress(input_file, compression_type, original_file_name, output_extension, max_bits)
+    
+    # Define decompressed_file_name conforme gerado pela descompressão
+    decompressed_file_name = f"decompressed_{original_file_name}{output_extension}"
+    print(f"Arquivo descomprimido criado: {decompressed_file_name}")
+
+    # Define output_file como o nome do arquivo descomprimido gerado
+    output_file = decompressed_file_name
+    print(f"Descompressão concluída: {output_file}")
+
+    # Salva as estatísticas, se especificado
+    if stats_file:
+        with open(stats_file, 'w') as f:
+            json.dump(trie_lzw.stats, f, indent=4)
+        print(f"Estatísticas de descompressão salvas em '{stats_file}'")
+
+# Função `process` para Compressão e Descompressão Sequencial
+def process(input_file, output_file, compression_type, max_bits=12, stats_file=None):
+    print("Compressão...")
+    trie_lzw = TrieLZW()
+
+    # Executa a compressão
+    file_name, file_extension = trie_lzw.compress(input_file, compression_type, max_bits)
+    compressed_file_name = f"compressed_{file_name}.bin"
+    print(f"Arquivo comprimido criado: {compressed_file_name}")
+
+    # Define output_file como o nome do arquivo comprimido gerado
+    temp_compressed_file = compressed_file_name
+    # print(f"Usando o arquivo comprimido '{temp_compressed_file}' para descompressão")
+
+    # Salva as estatísticas da compressão, se especificado
+    if stats_file:
+        with open(stats_file, 'w') as f:
+            json.dump(trie_lzw.stats, f, indent=4)
+        print(f"Estatísticas de compressão salvas em '{stats_file}'")
+
+    print("Descompressão...")
+    # Extrai o nome base e a extensão do arquivo de saída desejado
+    output_base_name, output_extension = os.path.splitext(os.path.basename(output_file))
+    original_file_name = output_base_name.replace('decompressed_', '')
+
+    # Executa a descompressão
+    trie_lzw.decompress(temp_compressed_file, compression_type, original_file_name, output_extension, max_bits)
+    
+    # Define decompressed_file_name conforme gerado pela descompressão
+    decompressed_file_name = f"decompressed_{original_file_name}{output_extension}"
+    # print(f"Arquivo descomprimido criado: {decompressed_file_name}")
+
+    # Define output_file como o nome do arquivo descomprimido gerado
+    output_file = decompressed_file_name
+    print(f"Descompressão concluída: {output_file}")
+
+    # Salva as estatísticas da descompressão, se especificado
+    if stats_file:
+        with open(stats_file, 'w') as f:
+            json.dump(trie_lzw.stats, f, indent=4)
+        print(f"Estatísticas de descompressão salvas em '{stats_file}'")
+    
+    print(f"Processo concluído.")
+
+# Função `main` com Suporte para Processamento Sequencial
 def main():
-    parser = argparse.ArgumentParser(description='Compress or decompress files using LZW algorithm with Compact Trie.')
-    subparsers = parser.add_subparsers(dest='command', help='Available commands: compress, decompress')
+    parser = argparse.ArgumentParser(description="Compressão e Descompressão LZW")
+    subparsers = parser.add_subparsers(dest='command', help='Comandos disponíveis: compress, decompress, process')
 
-    # Parser for the 'compress' command
-    compress_parser = subparsers.add_parser('compress', help='Compress a file')
-    compress_parser.add_argument('input_file', type=str, help='Path to the input file to compress')
-    compress_parser.add_argument('output_file', type=str, help='Path to the output compressed file')
-    compress_parser.add_argument('--type', type=str, choices=['s', 'd'], required=True, help='Compression type: "s" for fixed size, "d" for variable size')
-    compress_parser.add_argument('--max-bits', type=int, default=12, help='Maximum number of bits (default: 12)')
-    compress_parser.add_argument('--stats-file', type=str, help='Path to save compression stats', default=None)
+    # Parser para o comando 'compress'
+    compress_parser = subparsers.add_parser('compress', help='Comprimir um arquivo')
+    compress_parser.add_argument('input_file', type=str, help='Caminho para o arquivo de entrada a ser comprimido')
+    compress_parser.add_argument('output_file', type=str, help='Caminho para o arquivo comprimido de saída')
+    compress_parser.add_argument('--type', type=str, choices=['s', 'd'], required=True, help='Tipo de compressão: "s" para tamanho fixo, "d" para tamanho variável')
+    compress_parser.add_argument('--max-bits', type=int, default=12, help='Número máximo de bits (padrão: 12)')
+    compress_parser.add_argument('--stats-file', type=str, help='Caminho para salvar as estatísticas de compressão', default=None)
 
-    # Parser for the 'decompress' command
-    decompress_parser = subparsers.add_parser('decompress', help='Decompress a file')
-    decompress_parser.add_argument('input_file', type=str, help='Path to the input compressed file')
-    decompress_parser.add_argument('output_file', type=str, help='Path to the output decompressed file')
-    decompress_parser.add_argument('--max-bits', type=int, default=12, help='Maximum number of bits (default: 12)')
-    decompress_parser.add_argument('--type', type=str, choices=['s', 'd'], required=True, help='Compression type: "s" for fixed size, "d" for variable size')
-    decompress_parser.add_argument('--stats-file', type=str, help='Path to save decompression stats', default=None)
+    # Parser para o comando 'decompress'
+    decompress_parser = subparsers.add_parser('decompress', help='Descomprimir um arquivo')
+    decompress_parser.add_argument('input_file', type=str, help='Caminho para o arquivo comprimido de entrada')
+    decompress_parser.add_argument('output_file', type=str, help='Caminho para o arquivo descomprimido de saída')
+    decompress_parser.add_argument('--type', type=str, choices=['s', 'd'], required=True, help='Tipo de compressão: "s" para tamanho fixo, "d" para tamanho variável')
+    decompress_parser.add_argument('--max-bits', type=int, default=12, help='Número máximo de bits (padrão: 12)')
+    decompress_parser.add_argument('--stats-file', type=str, help='Caminho para salvar as estatísticas de descompressão', default=None)
+
+    # Parser para o comando 'process'
+    process_parser = subparsers.add_parser('process', help='Comprimir e descomprimir um arquivo sequencialmente')
+    process_parser.add_argument('input_file', type=str, help='Caminho para o arquivo de entrada a ser comprimido e descomprimido')
+    process_parser.add_argument('output_file', type=str, help='Caminho para o arquivo descomprimido final de saída')
+    process_parser.add_argument('--type', type=str, choices=['s', 'd'], required=True, help='Tipo de compressão: "s" para tamanho fixo, "d" para tamanho variável')
+    process_parser.add_argument('--max-bits', type=int, default=12, help='Número máximo de bits (padrão: 12)')
+    process_parser.add_argument('--stats-file', type=str, help='Caminho para salvar as estatísticas de compressão e descompressão', default=None)
 
     args = parser.parse_args()
 
@@ -522,59 +634,10 @@ def main():
         compress(args.input_file, args.output_file, args.type, args.max_bits, args.stats_file)
     elif args.command == 'decompress':
         decompress(args.input_file, args.output_file, args.type, args.max_bits, args.stats_file)
+    elif args.command == 'process':
+        process(args.input_file, args.output_file, args.type, args.max_bits, args.stats_file)
     else:
         parser.print_help()
 
-def compress(input_file, output_file, compression_type, max_bits, stats_file=None):
-    trie_lzw = TrieLZW()
-
-    # Executa a compressão com os parâmetros especificados
-    trie_lzw.compress(input_file, compression_type, max_bits)
-
-    # Obter o nome base do arquivo de entrada
-    input_base_name = os.path.splitext(os.path.basename(input_file))[0]
-    compressed_file_name = f"compressed_{input_base_name}.bin"
-
-    if os.path.exists(compressed_file_name):
-        os.rename(compressed_file_name, output_file)
-    else:
-        print(f"Error: Compressed file {compressed_file_name} not found.")
-        sys.exit(1)
-
-    # Salva as estatísticas, se especificado
-    if stats_file:
-        with open(stats_file, 'w') as f:
-            json.dump(trie_lzw.stats, f, indent=4)
-        print(f"Compression stats saved to {stats_file}")
-
-    print(f"Compression completed: {output_file}")
-    
-def decompress(input_file, output_file, compression_type, max_bits, stats_file=None):
-    trie_lzw = TrieLZW()
-
-    # Obter o nome base e extensão do arquivo de saída
-    output_base_name, output_extension = os.path.splitext(os.path.basename(output_file))
-    original_file_name = output_base_name.replace('decompressed_', '')
-
-    # Executa a descompressão
-    trie_lzw.decompress(input_file, compression_type, original_file_name, output_extension, max_bits)
-
-    # Nome do arquivo descomprimido gerado pelo método
-    decompressed_file_name = f"decompressed_{original_file_name}{output_extension}"
-
-    if os.path.exists(decompressed_file_name):
-        os.rename(decompressed_file_name, output_file)
-    else:
-        print(f"Error: Decompressed file {decompressed_file_name} not found.")
-        sys.exit(1)
-
-    # Salva as estatísticas, se especificado
-    if stats_file:
-        with open(stats_file, 'w') as f:
-            json.dump(trie_lzw.stats, f, indent=4)
-        print(f"Decompression stats saved to {stats_file}")
-
-    print(f"Decompression completed: {output_file}")
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
