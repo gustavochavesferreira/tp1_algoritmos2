@@ -461,30 +461,30 @@ class TrieLZW:
     # Join characters into a string (optional)
     ascii_string = ''.join(ascii_characters)
 
-    # Gerando o arquivo inicial
-    switch = {
-        '.txt': write_txt_file,
-        '.bmp': write_image_file,
-        '.tiff': write_image_file # Não sei se está funcionando
-        }
-    handler = switch.get(original_file_extension)
-    if handler:
-        handler(bytes_, f"decompressed_{original_file_name}{original_file_extension}")
-    else:
-        print("Tipo de arquivo não suportado!")
-
     # # Gerando o arquivo inicial
-    # output_file = f"decompressed_{original_file_name}{original_file_extension}"
-
-    # if original_file_extension == '.txt':
-    #     # Tratamento especial para arquivos de texto
-    #     write_txt_file(bytes_, output_file)
+    # switch = {
+    #     '.txt': write_txt_file,
+    #     '.bmp': write_image_file,
+    #     '.tiff': write_image_file # Não sei se está funcionando
+    #     }
+    # handler = switch.get(original_file_extension)
+    # if handler:
+    #     handler(bytes_, f"decompressed_{original_file_name}{original_file_extension}")
     # else:
-    #     # Abordagem genérica para outros tipos de arquivo
-    #   with open(output_file, 'wb') as file:
-    #         file.write(bytes(bytes_))  # Converte a lista para bytes
+    #     print("Tipo de arquivo não suportado!")
 
-    # print(f"Arquivo descomprimido salvo em: {output_file}")
+    # Gerando o arquivo inicial
+    output_file = f"decompressed_{original_file_name}{original_file_extension}"
+
+    if original_file_extension == '.txt':
+        # Tratamento especial para arquivos de texto
+        write_txt_file(bytes_, output_file)
+    else:
+        # Abordagem genérica para outros tipos de arquivo
+      with open(output_file, 'wb') as file:
+            file.write(bytes(bytes_))  # Converte a lista para bytes
+
+    print(f"Arquivo descomprimido salvo em: {output_file}")
 
     # Finalizar rastreamento de tempo e memória
     end_time = time.time()
