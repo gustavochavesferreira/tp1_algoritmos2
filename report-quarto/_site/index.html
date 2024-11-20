@@ -177,7 +177,6 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </ul></li>
   <li><a href="#resultados-e-discussão" id="toc-resultados-e-discussão" class="nav-link" data-scroll-target="#resultados-e-discussão">Resultados e Discussão</a>
   <ul class="collapse">
-  <li><a href="#a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada." id="toc-a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada." class="nav-link" data-scroll-target="#a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada.">A eficiência do algoritmo LZW é altamente dependente das características dos dados de entrada.</a></li>
   <li><a href="#análises-por-tipo-de-arquivo" id="toc-análises-por-tipo-de-arquivo" class="nav-link" data-scroll-target="#análises-por-tipo-de-arquivo">Análises por Tipo de Arquivo</a></li>
   </ul></li>
   <li><a href="#conclusão" id="toc-conclusão" class="nav-link" data-scroll-target="#conclusão">Conclusão</a></li>
@@ -401,16 +400,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="resultados-e-discussão" class="level2">
 <h2 class="anchored" data-anchor-id="resultados-e-discussão">Resultados e Discussão</h2>
-<section id="a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada." class="level3">
-<h3 class="anchored" data-anchor-id="a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada.">A eficiência do algoritmo LZW é altamente dependente das características dos dados de entrada.</h3>
-<p>A seguir, discutimos como diferentes fatores influenciam a taxa de compressão em textos, imagens e arquivos binários.</p>
-<p>Os testes foram realizados em ambiente Colab, para maior compatibilidade, e podem ser acessados na raiz do repositório no GitHub ou pelo link:</p>
+<p>A eficiência do algoritmo LZW é altamente dependente das características dos dados de entrada. A seguir, discutimos como diferentes fatores influenciam a taxa de compressão em textos, imagens e arquivos binários. A respeito das duas variantes do algoritmo, a versão dinâmica se demonstrou mais atrativa do que sua variável estática nos momentos em que os limites para tamanho de código máximo não ultrapassaram a faixa de 16 a 20 bits. O uso de tamanhos de códigos variáveis associados a uma escolha ponderada de um teto de crescimento apresentaram melhores taxas de compressão em comparação à alternativa de sempre emitir códigos de 12 bits para a maioria dos casos. Vale ressaltar que o uso de memória pode se tornar um problema caso o dicionário representado pela árvore de prefixos cresça de forma preponderante. Ademais, códigos muito extensos tendem a anular o efeito da compressão para execuções muito longas. Para se ter uma ideia do desempenho do LZW para os casos principais de texto (‘.txt’) e de imagem (‘.bmp’), o algoritmo no caso estático teve os seguintes resultados:</p>
+<p>O arquivo de texto “test_text.txt” com 200 mil caracteres apresentou uma redução de 200000 bytes para 59537 bytes. A imagem “imagemhomog_30kb.bmp” de tamanho inicial 282062 bytes se reduziu para 3417 bytes (a redundância foi bem aproveitada).</p>
+<p>Para formatos de arquivo mais variados, algumas estatísticas obtidas estão representadas abaixo. Elas são seguidas por comentários a respeito de cada formato.</p>
 <section id="tabelas-resumidas" class="level4">
 <h4 class="anchored" data-anchor-id="tabelas-resumidas">Tabelas Resumidas</h4>
 <p><strong>Compressão:</strong></p>
 <p><strong>Descompressão:</strong></p>
 <hr>
-</section>
 </section>
 <section id="análises-por-tipo-de-arquivo" class="level3">
 <h3 class="anchored" data-anchor-id="análises-por-tipo-de-arquivo">Análises por Tipo de Arquivo</h3>
@@ -420,8 +417,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="imagens" class="level4">
 <h4 class="anchored" data-anchor-id="imagens">Imagens</h4>
-<p>Imagens com áreas grandes de cor uniforme, como gráficos ou desenhos animados, são mais compressíveis. Já imagens fotográficas, com variação de cores e detalhes finos, oferecem menos oportunidades para compressão. Imagens em escala de cinza ou monocromáticas têm menos informações por pixel do que imagens coloridas, resultando em maior taxa de compressão.</p>
-<p>Imagens já comprimidas em formatos como JPEG ou PNG (que usam compressão com perdas e sem perdas, respectivamente) podem não ser eficazmente comprimidas novamente pelo LZW.</p>
+<p>Imagens com áreas grandes de cor uniforme, como gráficos ou desenhos animados, são mais compressíveis. Já imagens fotográficas, com variação de cores e detalhes finos, oferecem menos oportunidades para compressão. Imagens em escala de cinza ou monocromáticas têm menos informações por pixel do que imagens coloridas, resultando em maior taxa de compressão. Imagens já comprimidas em formatos como JPEG ou PNG (que usam compressão com perdas e sem perdas, respectivamente) podem não ser eficazmente comprimidas novamente pelo LZW.</p>
 </section>
 <section id="áudio" class="level4">
 <h4 class="anchored" data-anchor-id="áudio">Áudio</h4>
@@ -433,16 +429,14 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="outras-análises" class="level4">
 <h4 class="anchored" data-anchor-id="outras-análises">Outras Análises</h4>
-<p>A taxa de compressão tende a estabilizar conforme o dicionário cresce e o algoritmo encontra sequências repetidas mais longas. Em arquivos com alta redundância, a taxa de compressão inicial é mais acentuada. O crescimento do dicionário é mais rápido em arquivos com muitos padrões únicos, o que pode afetar o desempenho em termos de memória.</p>
+<p>Observa-se que a taxa de compressão tende a estabilizar conforme o dicionário cresce e o algoritmo encontra sequências repetidas mais longas. Em arquivos com alta redundância, a taxa de compressão inicial é mais acentuada. O crescimento do dicionário é mais rápido em arquivos com muitos padrões únicos, o que pode afetar o desempenho em termos de memória.</p>
 <hr>
 </section>
 </section>
 </section>
 <section id="conclusão" class="level2">
 <h2 class="anchored" data-anchor-id="conclusão">Conclusão</h2>
-<p>A implementação do algoritmo LZW utilizando uma trie compacta demonstrou-se eficaz na compressão de arquivos de diferentes tipos. A estrutura de dados escolhida permitiu otimizar as operações críticas do algoritmo, resultando em tempos de execução aceitáveis e uso de memória controlado.</p>
-<p>Os testes realizados confirmaram a correta funcionalidade do algoritmo, preservando a integridade dos dados após a compressão e descompressão. Observou-se que a eficiência da compressão varia conforme o tipo de arquivo e suas características intrínsecas, sendo mais eficaz em dados com alta redundância.</p>
-<p>Enquanto métodos como o LZW oferecem uma base sólida e flexibilidade, o avanço contínuo na tecnologia de compressão tem permitido o desenvolvimento de soluções mais especializadas e eficientes para domínios específicos. Assim, a escolha informada do método de compressão não apenas maximiza a eficiência do armazenamento, mas também preserva a integridade e qualidade dos dados de maneira mais eficaz.</p>
+<p>A implementação do algoritmo LZW utilizando uma trie compacta demonstrou-se eficaz na compressão de arquivos de diferentes tipos. A estrutura de dados escolhida permitiu otimizar as operações críticas do algoritmo, resultando em tempos de execução aceitáveis e uso de memória controlado. Os testes realizados confirmaram a correta funcionalidade do algoritmo, preservando a integridade dos dados após a compressão e descompressão. Observou-se que a eficiência da compressão varia conforme o tipo de arquivo e suas características intrínsecas, sendo mais eficaz em dados com alta redundância. Enquanto métodos como o LZW oferecem uma base sólida e flexibilidade, o avanço contínuo na tecnologia de compressão tem permitido o desenvolvimento de soluções mais especializadas e eficientes para domínios específicos. Assim, a escolha informada do método de compressão não apenas maximiza a eficiência do armazenamento, mas também preserva a integridade e qualidade dos dados de maneira mais eficaz.</p>
 <hr>
 </section>
 <section id="referências" class="level2">
