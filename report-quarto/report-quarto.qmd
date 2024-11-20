@@ -14,322 +14,184 @@ output-file: index.html
 jupyter: python3
 ---
 
-# Análise de Compressão e Descompressão com LZW
+# Algoritmo de Compressão LZW com Trie Compacta  
+**Relatório**  
 
-## Tabela de Conteúdo
-1. [Introdução](#introdução)
-2. [Métodos](#métodos)
-3. [Resultados](#resultados)
-4. [Execução](#execução)
-5. [Conclusão](#conclusão)
+**Gustavo Chaves Ferreira - 2022043329**  
+**Júlio Guerra Domingues - 2022431280**
 
+---
 
-## Introdução
-O objetivo deste trabalho é avaliar a eficiência do algoritmo LZW em diferentes tipos de arquivos (texto, binário e imagem) e tamanhos (pequeno, médio e grande). A implementação foi instrumentada para registrar métricas de desempenho como taxa de compressão, tempo de execução e uso de memória.
+## Introdução  
+Este relatório apresenta a implementação de um algoritmo de compressão de arquivos utilizando o método Lempel-Ziv-Welch (LZW). O foco principal é demonstrar como estruturas de dados, especificamente a trie compacta, podem ser empregadas para otimizar o processo de compressão e descompressão. Além disso, discutiremos os resultados obtidos a partir de testes realizados com diferentes tipos de arquivos, incluindo textos, imagens e arquivos binários, analisando em quais situações o algoritmo é mais ou menos eficiente.
 
-## Métodos
-O LZW foi implementado em Python com suporte para:
-- Compressão e descompressão de arquivos.
-- Registro de métricas de desempenho em arquivos JSON.
-- Visualização dos resultados por meio de gráficos.
+---
 
-Os tipos de arquivos testados incluem:
-- Textos (`.txt`).
-- Imagens bitmap (`.bmp`).
-- Arquivos binários (`.bin`).
+## Descrição do Algoritmo LZW  
+O algoritmo LZW é um método de compressão sem perdas que substitui sequências repetidas de símbolos por códigos inteiros, reduzindo assim o tamanho total do arquivo. O algoritmo opera construindo um dicionário de sequências de caracteres à medida que percorre o arquivo de entrada. Inicialmente, o dicionário contém todas as possíveis representações de um único símbolo do alfabeto utilizado (no caso, os 256 símbolos da tabela ASCII).
 
-Tamanhos dos arquivos:
-- Pequeno (~10 KB).
-- Médio (~1 MB).
-- Grande (>10 MB).
+### Processo de Compressão  
+1. **Inicialização:** O dicionário é inicializado com todas as sequências de comprimento um possíveis (símbolos ASCII).  
+2. **Leitura de Símbolos:** O algoritmo lê os símbolos de entrada um a um, construindo sequências concatenadas.  
+3. **Verificação no Dicionário:** Se a sequência atual existe no dicionário, o algoritmo continua concatenando o próximo símbolo.  
+4. **Atualização do Dicionário:**  
+   - Adiciona a nova sequência ao dicionário com um novo código.  
+   - Emite o código correspondente à sequência anterior.  
+   - Reinicia a sequência com o símbolo atual.  
+5. **Ajuste do Tamanho do Código:** O algoritmo pode operar com tamanho de código fixo ou variável. Na implementação atual, utilizamos um tamanho de código variável, aumentando o número de bits conforme o dicionário cresce.
 
-## Resultados
-As métricas coletadas incluem:
-- Taxa de compressão.
-- Tempo de compressão e descompressão.
-- Uso de memória.
-- Tamanho do dicionário.
+### Processo de Descompressão  
+1. **Inicialização:** O dicionário é inicializado de forma semelhante à compressão.  
+2. **Leitura de Códigos:** O algoritmo lê os códigos do arquivo comprimido.  
+3. **Reconstrução das Sequências:** Com base nos códigos e no dicionário, o algoritmo reconstrói as sequências originais.  
+4. **Atualização do Dicionário:** Novas sequências são adicionadas ao dicionário à medida que são descobertas.
 
-### Gráficos
+---
 
-#### Taxa de Compressão
-![Taxa de Compressão](./results/compression_ratio.png)
+## Implementação  
+As classes `CompactTrie` e `CompactTrieNode` formam a estrutura de dados base para gerenciar prefixos binários de forma eficiente. A classe `TrieLZW` utiliza esta Trie para implementar o algoritmo de compressão LZW, otimizando armazenamento e buscas durante compressão e descompressão.
 
-#### Tempo de Compressão
+### Detalhes da Implementação  
+- **Linguagem:** Python.  
+- **Manipulação de Bits:** Utilização de strings binárias para representar sequências e códigos.  
+- **Tamanho do Código:** Implementação com tamanho de código variável, iniciando com 9 bits e aumentando conforme o dicionário cresce.  
+- **Entrada/Saída:** O programa recebe parâmetros via linha de comando, permitindo especificar arquivos de entrada, saída e configurações opcionais.  
+- **Estatísticas:** Durante a compressão e descompressão, estatísticas como taxa de compressão, tamanho do dicionário, tempo de execução e uso de memória são coletadas.
 
+---
 
+## Principais Classes  
 
-testando:
-```{python}
-%%writefile lzw.py
-import argparse
-import time
-import json
-import sys
-import os
-import tracemalloc
+### Classe `CompactTrieNode`  
+Essa classe representa os nós de uma Trie Compacta Binária.  
+- **Atributos:**  
+  - `children`: Uma lista de dois filhos binários (0 ou 1), inicializados como `None`.  
+  - `binary_string`: String binária representando o prefixo associado ao nó.  
+  - `value`: Valor armazenado no nó, utilizado para buscas e compressão.  
+  - `is_leaf`: Indicador booleano se o nó é uma folha.  
+  - `unique_id`: Um identificador único gerado automaticamente para o nó (usado para visualização).  
 
-class BitWriter:
-    def __init__(self, file):
-        self.file = file
-        self.buffer = 0
-        self.buffer_size = 0  # Número de bits atualmente no buffer
+### Classe `CompactTrie`  
+Implementa uma Trie Compacta Binária, otimizando buscas e inserções baseadas em prefixos binários.  
+- **Principais Métodos:**  
+  - `get_common_prefix_length(key1, key2)`: Retorna o comprimento do prefixo comum entre duas strings binárias, essencial para dividir ou inserir nós.  
+  - `search(key)`: Busca um nó na Trie com o exato prefixo igual a `key`. Retorna o nó encontrado ou `None` se a chave não existe.  
+  - `insert(key, value)`: Insere um novo nó com a string binária `key` e o valor `value`.  
+  - `delete_key(key)`: Remove uma chave `key` da Trie.  
+  - `visualize(filename)`: Gera uma visualização da Trie em formato gráfico (.png) utilizando o graphviz, para debug. Cada nó é rotulado com seu prefixo e, caso seja folha, o valor associado.  
 
-    def write_bits(self, data, num_bits):
-        while num_bits > 0:
-            remaining = 8 - self.buffer_size
-            bits_to_write = min(num_bits, remaining)
-            # Extrai os bits mais significativos
-            bits = (data >> (num_bits - bits_to_write)) & ((1 << bits_to_write) - 1)
-            self.buffer = (self.buffer << bits_to_write) | bits
-            self.buffer_size += bits_to_write
-            num_bits -= bits_to_write
+### Classe `TrieLZW`  
+Implementa o algoritmo LZW, utilizando uma Trie Compacta Binária como dicionário dinâmico.  
+- **Principais Métodos:**  
+  - `compress(file_path, compression_type, codes_max_size)`: Aplica a compressão LZW em um arquivo de entrada. Lida com os diferentes tipos de compressão (estática e dinâmica). O arquivo comprimido é salvo em formato binário (.bin), com cabeçalho indicando o tamanho do padding utilizado.  
+  - `decompress(file_path, compression_type, original_file_name, original_file_extension, codes_max_size)`: Restaura o arquivo original a partir de um arquivo comprimido. Reconstrói os símbolos originais com base nos códigos comprimidos. Gerencia expansão ou reset do dicionário conforme o tipo de compressão. O arquivo descomprimido é salvo com a extensão original.  
 
-            if self.buffer_size == 8:
-                self.file.write(bytes([self.buffer]))
-                self.buffer = 0
-                self.buffer_size = 0
+---
 
-    def flush(self):
-        if self.buffer_size > 0:
-            self.buffer = self.buffer << (8 - self.buffer_size)
-            self.file.write(bytes([self.buffer]))
-            self.buffer = 0
-            self.buffer_size = 0
+## Fluxo do Algoritmo LZW  
+### Compressão  
+1. Inicializa um dicionário com todas as combinações ASCII.  
+2. Lê o arquivo original byte a byte, criando sequências de símbolos.  
+3. Para cada nova sequência:  
+   - Se a sequência estiver no dicionário, continua adicionando símbolos.  
+   - Caso contrário, adiciona a sequência ao dicionário com um novo código.  
+4. Salva os códigos resultantes em um arquivo binário comprimido.  
 
-class BitReader:
-    def __init__(self, file):
-        self.file = file
-        self.buffer = 0
-        self.buffer_size = 0  # Número de bits atualmente no buffer
+### Descompressão  
+1. Inicializa um dicionário idêntico ao da compressão.  
+2. Lê os códigos do arquivo comprimido e busca as sequências correspondentes no dicionário.  
+3. Adiciona novas sequências ao dicionário conforme os códigos são interpretados.  
+4. Reconstrói o conteúdo original e o salva no formato correspondente.  
 
-    def read_bits(self, num_bits):
-        result = 0
-        while num_bits > 0:
-            if self.buffer_size == 0:
-                byte = self.file.read(1)
-                if not byte:
-                    return None  # Fim do arquivo
-                self.buffer = byte[0]
-                self.buffer_size = 8
+---
 
-            bits_to_read = min(num_bits, self.buffer_size)
-            result = (result << bits_to_read) | ((self.buffer >> (self.buffer_size - bits_to_read)) & ((1 << bits_to_read) - 1))
-            self.buffer_size -= bits_to_read
-            num_bits -= bits_to_read
-        return result
+## Execução  
 
-class LZW:
-    def __init__(self, max_bits=12):
-        self.max_bits = max_bits
-        self.max_table_size = 2 ** self.max_bits
-        self.stats = {
-            'compression_ratio_over_time': [],
-            'dictionary_size_over_time': [],
-            'execution_time': 0,
-            'memory_usage': 0
-        }
-
-    def compress(self, input_data):
-        start_time = time.time()
-        tracemalloc.start()  
-
-        # Inicializa o dicionário com bytes individuais
-        dictionary = {bytes([i]): i for i in range(256)}
-        string = b""
-        compressed_data = []
-        code = 256
-
-        for symbol in input_data:
-            symbol_byte = bytes([symbol])
-            string_plus_symbol = string + symbol_byte
-            if string_plus_symbol in dictionary:
-                string = string_plus_symbol
-            else:
-                compressed_data.append(dictionary[string])
-                if len(dictionary) < self.max_table_size:
-                    dictionary[string_plus_symbol] = code
-                    code += 1
-                    self.stats['dictionary_size_over_time'].append(len(dictionary))
-                string = symbol_byte
-
-                # Atualiza estatísticas
-                compressed_size = len(compressed_data) * self.max_bits
-                original_size = len(input_data) * 8  # Assume 8 bits por byte
-                compression_ratio = compressed_size / original_size
-                self.stats['compression_ratio_over_time'].append(compression_ratio)
-
-        if string:
-            compressed_data.append(dictionary[string])
-
-        # Calcula o tempo
-        end_time = time.time()
-        self.stats['execution_time'] = end_time - start_time
-
-        # Calcula o uso de memória
-        _, peak_memory = tracemalloc.get_traced_memory()
-        self.stats['memory_usage'] = peak_memory / 1024  # Converte para KB
-        tracemalloc.stop()
-
-        return compressed_data
-
-    def decompress(self, compressed_data):
-        start_time = time.time()
-        tracemalloc.start()
-
-
-        # Inicializa o dicionário com bytes individuais
-        dictionary = {i: bytes([i]) for i in range(256)}
-        result = bytearray()
-        code = 256
-
-        if not compressed_data:
-            print("Erro: Dados comprimidos estão vazios.")
-            return bytes(result)
-
-        prev_code = compressed_data.pop(0)
-        string = dictionary[prev_code]
-        result.extend(string)
-
-        for curr_code in compressed_data:
-            if curr_code in dictionary:
-                entry = dictionary[curr_code]
-            elif curr_code == code:
-                entry = string + string[:1]
-            else:
-                raise ValueError(f"Código inválido: {curr_code}")
-
-            result.extend(entry)
-
-            if len(dictionary) < self.max_table_size:
-                dictionary[code] = string + entry[:1]
-                code += 1
-                self.stats['dictionary_size_over_time'].append(len(dictionary))
-
-            string = entry
-
-        # Calcula o tempo
-        end_time = time.time()
-        self.stats['execution_time'] = end_time - start_time
-
-        # Calcula o uso de memória
-        _, peak_memory = tracemalloc.get_traced_memory()
-        self.stats['memory_usage'] = peak_memory / 1024
-        tracemalloc.stop()
-
-        return bytes(result)
-
-def run_lzw(mode, input_file, output_file, max_bits=12, stats_file=None):
-    lzw = LZW(max_bits=max_bits)
-
-    if mode == "compress":
-        # Lê o arquivo de entrada em modo binário
-        with open(input_file, "rb") as file:
-            input_data = file.read()
-
-        # Realiza a compressão
-        compressed_data = lzw.compress(input_data)
-        # print(f"Códigos comprimidos: {compressed_data}")
-        
-        # Escreve os dados comprimidos usando BitWriter
-        with open(output_file, "wb") as file:
-            bit_writer = BitWriter(file)
-            for data in compressed_data:
-                bit_writer.write_bits(data, lzw.max_bits)
-            bit_writer.flush()
-
-        print(f"Compressão concluída. Arquivo salvo em {output_file}")
-
-        # Calcula a taxa de compressão
-        compressed_size = len(compressed_data) * max_bits
-        original_size = len(input_data) * 8  # Assume 8 bits por byte
-        compression_ratio = compressed_size / original_size
-
-        # Exporta os dados comprimidos para um arquivo JSON
-        compressed_json_file = output_file + ".json"
-        with open(compressed_json_file, "w") as json_file:
-            json.dump(compressed_data, json_file, indent=4)
-        print(f"Códigos comprimidos salvos em {compressed_json_file}")
-
-        # Salva as estatísticas se solicitado
-        if stats_file:
-            stats = {
-                'compression_ratio_over_time': lzw.stats['compression_ratio_over_time'],
-                'dictionary_size_over_time': lzw.stats['dictionary_size_over_time'],
-                'execution_time': lzw.stats['execution_time'],
-                'memory_usage': lzw.stats['memory_usage']
-            }
-            with open(stats_file, "w") as f:
-                json.dump(stats, f, indent=4)
-            print(f"Estatísticas salvas em {stats_file}")
-
-    elif mode == "decompress":
-        print(f"Iniciando descompressão de {input_file}...")
-        # Lê os dados comprimidos usando BitReader
-        compressed_data = []
-        with open(input_file, "rb") as file:
-            bit_reader = BitReader(file)
-            while True:
-                data = bit_reader.read_bits(lzw.max_bits)
-                if data is None:
-                    break
-                compressed_data.append(data)
-
-        print(f"Comprimento dos dados comprimidos: {len(compressed_data)}")
-
-        if not compressed_data:
-            print("Erro: Arquivo comprimido está vazio ou corrompido.")
-            sys.exit(1)
-
-        # Realiza a descompressão
-        try:
-            decompressed_data = lzw.decompress(compressed_data)
-        except Exception as e:
-            print(f"Erro durante a descompressão: {e}")
-            sys.exit(1)
-
-        # print(f"Dados descomprimidos: {decompressed_data.decode('utf-8', errors='ignore')}")
-        print(f"Comprimento dos dados descomprimidos: {len(decompressed_data)}")
-
-        # Escreve os dados descomprimidos em modo binário
-        with open(output_file, "wb") as file:
-            file.write(decompressed_data)
-
-        print(f"Descompressão concluída. Arquivo salvo em {output_file}")
-
-        # Salva as estatísticas se solicitado
-        if stats_file:
-            stats = {
-                'execution_time': lzw.stats['execution_time'],
-                'memory_usage': lzw.stats['memory_usage']
-            }
-            with open(stats_file, "w") as f:
-                json.dump(stats, f, indent=4)
-            print(f"Estatísticas salvas em {stats_file}")
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Compressão e Descompressão usando LZW")
-    parser.add_argument("mode", choices=["compress", "decompress"], help="Modo de operação")
-    parser.add_argument("input_file", help="Arquivo de entrada")
-    parser.add_argument("output_file", help="Arquivo de saída")
-    parser.add_argument("--max-bits", type=int, default=12, help="Número máximo de bits (padrão: 12)")
-    parser.add_argument("--stats-file", help="Arquivo para salvar estatísticas em formato JSON")
-
-    # Verifica se está em um ambiente interativo
-    if 'ipykernel' in sys.modules:
-        # Defina os argumentos manualmente para testes no notebook
-        # Ajuste conforme necessário para testes
-        args = parser.parse_args([
-            'compress',            # ou 'decompress' conforme necessário
-            'input.txt',           # Substitua pelo arquivo de entrada correto
-            'output.lzw',          # Substitua pelo arquivo de saída correto
-            '--max-bits', '12',
-            '--stats-file', 'stats.json'
-        ])
-    else:
-        args = parser.parse_args()
-
-    run_lzw(args.mode, args.input_file, args.output_file, args.max_bits, args.stats_file)
-
-!python3 lzw.py compress input.txt output.lzw --max-bits 12 --stats-file compress_stats.json
+### Comando de Compressão  
+```bash
+python3 lzw.py compress <arquivo_a_ser_comprimido.*> <arquivo_comprimido.bin> --stats-file <arquivo_com_estatisticas.json>
 ```
+
+#### Descrição
+- **`compress`**: Indica que o programa realizará a compressão do arquivo.  
+- **`<arquivo_a_ser_comprimido.*>`**: Caminho do arquivo de entrada que será comprimido.  
+- **`<arquivo_comprimido.bin>`**: Caminho onde o arquivo comprimido será salvo.  
+- **`--stats-file <arquivo_com_estatisticas.json>`**: (Opcional) Especifica o arquivo JSON onde as estatísticas da compressão, como tamanho inicial e comprimido, serão salvas.  
+
+### Comando de Descompressão  
+```bash
+python3 lzw.py decompress <arquivo_comprimido.bin> <arquivo_descomprimido.*> --max-bits <> --stats-file <arquivo_com_estatísticas.json>
+```
+
+#### Descrição
+- **`decompress`**: Indica que o programa realizará a descompressão do arquivo.  
+- **`<arquivo_a_ser_descomprimido.bin>`**: Caminho do arquivo comprimido que será descomprimido.  
+- **`<arquivo_descomprimido.*>`**: Caminho onde o arquivo descomprimido será salvo.  
+- **`--max-bits <>`**: Define o tamanho máximo dos códigos (em bits) utilizados na descompressão.  
+- **`--stats-file <arquivo_com_estatísticas.json>`**: (Opcional) Especifica o arquivo JSON onde as estatísticas da descompressão, como tamanho do arquivo comprimido e descomprimido, serão salvas.  
+
+## Testes  
+
+### Métodos  
+O código foi instrumentado para monitorar os tempos de compressão e descompressão, razão de compressão, tamanho do dicionário e uso de memória. Para cada arquivo descomprimido, foi verificada a integridade a partir da comparação binária, para assegurar que os dados originais foram recuperados sem perdas.  
+
+Tais variáveis foram avaliadas em arquivos de diferentes tipos e tamanhos, de forma a verificar o desempenho do algoritmo em diferentes cenários. Foram realizados testes com arquivos de texto (.txt), imagem (.bmp, .pgm), áudio (.wav) e binários (.bin). Outros formatos comuns de arquivos, como .jpg, .png e .mpg, não foram testados pois já apresentam compressão (com ou sem perdas), o que influenciaria no comportamento do programa e prejudicaria as análises.  
+
+---
+
+## Resultados e Discussão  
+
+### A eficiência do algoritmo LZW é altamente dependente das características dos dados de entrada.  
+A seguir, discutimos como diferentes fatores influenciam a taxa de compressão em textos, imagens e arquivos binários.
+
+Os testes foram realizados em ambiente Colab, para maior compatibilidade, e podem ser acessados na raiz do repositório no GitHub ou pelo link: 
+
+#### Tabelas Resumidas  
+
+**Compressão:**  
+
+**Descompressão:**  
+
+---
+
+### Análises por Tipo de Arquivo  
+
+#### Textos  
+Textos com muitas repetições, como documentos com vocabulário limitado ou formatos estruturados (como XML ou JSON), tendem a ser mais compressíveis. Isso ocorre porque o LZW aproveita sequências repetidas para construir um dicionário mais eficiente. Textos ricos em vocabulário, como obras literárias, têm menos repetições e, portanto, menor taxa de compressão.  
+
+#### Imagens  
+Imagens com áreas grandes de cor uniforme, como gráficos ou desenhos animados, são mais compressíveis. Já imagens fotográficas, com variação de cores e detalhes finos, oferecem menos oportunidades para compressão. Imagens em escala de cinza ou monocromáticas têm menos informações por pixel do que imagens coloridas, resultando em maior taxa de compressão.  
+
+Imagens já comprimidas em formatos como JPEG ou PNG (que usam compressão com perdas e sem perdas, respectivamente) podem não ser eficazmente comprimidas novamente pelo LZW.  
+
+#### Áudio  
+A compressão de arquivos WAV utilizando o algoritmo LZW é influenciada principalmente pela redundância dos dados de áudio, parâmetros de gravação como taxa de amostragem e profundidade de bits, complexidade do conteúdo de áudio, e configurações do algoritmo LZW. Arquivos WAV com alta redundância e padrões repetitivos são mais eficazmente comprimidos pelo LZW, enquanto aqueles com alta entropia e variações rápidas apresentarão menores taxas de compressão.  
+
+#### Arquivos Binários  
+Arquivos binários com dados aleatórios ou já comprimidos (como arquivos ZIP ou executáveis) possuem alta entropia, o que torna a compressão adicional ineficiente. Se o arquivo binário contém estruturas repetitivas ou padrões previsíveis, o LZW pode obter alguma compressão. Arquivos binários que representam dados estruturados (por exemplo, registros com campos fixos) podem ser mais suscetíveis à compressão.  
+
+#### Outras Análises  
+A taxa de compressão tende a estabilizar conforme o dicionário cresce e o algoritmo encontra sequências repetidas mais longas. Em arquivos com alta redundância, a taxa de compressão inicial é mais acentuada. O crescimento do dicionário é mais rápido em arquivos com muitos padrões únicos, o que pode afetar o desempenho em termos de memória.  
+
+---
+
+## Conclusão  
+A implementação do algoritmo LZW utilizando uma trie compacta demonstrou-se eficaz na compressão de arquivos de diferentes tipos. A estrutura de dados escolhida permitiu otimizar as operações críticas do algoritmo, resultando em tempos de execução aceitáveis e uso de memória controlado.  
+
+Os testes realizados confirmaram a correta funcionalidade do algoritmo, preservando a integridade dos dados após a compressão e descompressão. Observou-se que a eficiência da compressão varia conforme o tipo de arquivo e suas características intrínsecas, sendo mais eficaz em dados com alta redundância.  
+
+Enquanto métodos como o LZW oferecem uma base sólida e flexibilidade, o avanço contínuo na tecnologia de compressão tem permitido o desenvolvimento de soluções mais especializadas e eficientes para domínios específicos. Assim, a escolha informada do método de compressão não apenas maximiza a eficiência do armazenamento, mas também preserva a integridade e qualidade dos dados de maneira mais eficaz.  
+
+---
+
+## Referências  
+1. Lempel A, Ziv J. Compression of Individual Sequences via Variable-Rate Coding. IEEE Transactions on Information Theory, 1978.  
+2. [CS Sound Files](https://www2.cs.uic.edu/~i101/SoundFiles/)  
+3. [MIT Lecture Notes](https://web.mit.edu/6.02/www/s2012/handouts/3.pdf)  
+4. [David Salomon - Data Compression](https://www.davidsalomon.name/DC4advertis/DComp4Ad.html)  
+
+---
+
+## Anexos  
+- **Código Fonte:** Disponível no GitHub.  
+- **Estatísticas Detalhadas:** Os arquivos utilizados nos testes e JSON com dados completos das execuções estão disponíveis na pasta `/tests`.  

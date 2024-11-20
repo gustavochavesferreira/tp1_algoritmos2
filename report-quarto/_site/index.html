@@ -21,6 +21,40 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
 </style>
 
 
@@ -109,15 +143,46 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">On this page</h2>
    
   <ul>
-  <li><a href="#análise-de-compressão-e-descompressão-com-lzw" id="toc-análise-de-compressão-e-descompressão-com-lzw" class="nav-link active" data-scroll-target="#análise-de-compressão-e-descompressão-com-lzw">Análise de Compressão e Descompressão com LZW</a>
+  <li><a href="#algoritmo-de-compressão-lzw-com-trie-compacta" id="toc-algoritmo-de-compressão-lzw-com-trie-compacta" class="nav-link active" data-scroll-target="#algoritmo-de-compressão-lzw-com-trie-compacta">Algoritmo de Compressão LZW com Trie Compacta</a>
   <ul class="collapse">
-  <li><a href="#tabela-de-conteúdo" id="toc-tabela-de-conteúdo" class="nav-link" data-scroll-target="#tabela-de-conteúdo">Tabela de Conteúdo</a></li>
   <li><a href="#introdução" id="toc-introdução" class="nav-link" data-scroll-target="#introdução">Introdução</a></li>
-  <li><a href="#métodos" id="toc-métodos" class="nav-link" data-scroll-target="#métodos">Métodos</a></li>
-  <li><a href="#resultados" id="toc-resultados" class="nav-link" data-scroll-target="#resultados">Resultados</a>
+  <li><a href="#descrição-do-algoritmo-lzw" id="toc-descrição-do-algoritmo-lzw" class="nav-link" data-scroll-target="#descrição-do-algoritmo-lzw">Descrição do Algoritmo LZW</a>
   <ul class="collapse">
-  <li><a href="#gráficos" id="toc-gráficos" class="nav-link" data-scroll-target="#gráficos">Gráficos</a></li>
+  <li><a href="#processo-de-compressão" id="toc-processo-de-compressão" class="nav-link" data-scroll-target="#processo-de-compressão">Processo de Compressão</a></li>
+  <li><a href="#processo-de-descompressão" id="toc-processo-de-descompressão" class="nav-link" data-scroll-target="#processo-de-descompressão">Processo de Descompressão</a></li>
   </ul></li>
+  <li><a href="#implementação" id="toc-implementação" class="nav-link" data-scroll-target="#implementação">Implementação</a>
+  <ul class="collapse">
+  <li><a href="#detalhes-da-implementação" id="toc-detalhes-da-implementação" class="nav-link" data-scroll-target="#detalhes-da-implementação">Detalhes da Implementação</a></li>
+  </ul></li>
+  <li><a href="#principais-classes" id="toc-principais-classes" class="nav-link" data-scroll-target="#principais-classes">Principais Classes</a>
+  <ul class="collapse">
+  <li><a href="#classe-compacttrienode" id="toc-classe-compacttrienode" class="nav-link" data-scroll-target="#classe-compacttrienode">Classe <code>CompactTrieNode</code></a></li>
+  <li><a href="#classe-compacttrie" id="toc-classe-compacttrie" class="nav-link" data-scroll-target="#classe-compacttrie">Classe <code>CompactTrie</code></a></li>
+  <li><a href="#classe-trielzw" id="toc-classe-trielzw" class="nav-link" data-scroll-target="#classe-trielzw">Classe <code>TrieLZW</code></a></li>
+  </ul></li>
+  <li><a href="#fluxo-do-algoritmo-lzw" id="toc-fluxo-do-algoritmo-lzw" class="nav-link" data-scroll-target="#fluxo-do-algoritmo-lzw">Fluxo do Algoritmo LZW</a>
+  <ul class="collapse">
+  <li><a href="#compressão" id="toc-compressão" class="nav-link" data-scroll-target="#compressão">Compressão</a></li>
+  <li><a href="#descompressão" id="toc-descompressão" class="nav-link" data-scroll-target="#descompressão">Descompressão</a></li>
+  </ul></li>
+  <li><a href="#execução" id="toc-execução" class="nav-link" data-scroll-target="#execução">Execução</a>
+  <ul class="collapse">
+  <li><a href="#comando-de-compressão" id="toc-comando-de-compressão" class="nav-link" data-scroll-target="#comando-de-compressão">Comando de Compressão</a></li>
+  <li><a href="#comando-de-descompressão" id="toc-comando-de-descompressão" class="nav-link" data-scroll-target="#comando-de-descompressão">Comando de Descompressão</a></li>
+  </ul></li>
+  <li><a href="#testes" id="toc-testes" class="nav-link" data-scroll-target="#testes">Testes</a>
+  <ul class="collapse">
+  <li><a href="#métodos" id="toc-métodos" class="nav-link" data-scroll-target="#métodos">Métodos</a></li>
+  </ul></li>
+  <li><a href="#resultados-e-discussão" id="toc-resultados-e-discussão" class="nav-link" data-scroll-target="#resultados-e-discussão">Resultados e Discussão</a>
+  <ul class="collapse">
+  <li><a href="#a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada." id="toc-a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada." class="nav-link" data-scroll-target="#a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada.">A eficiência do algoritmo LZW é altamente dependente das características dos dados de entrada.</a></li>
+  <li><a href="#análises-por-tipo-de-arquivo" id="toc-análises-por-tipo-de-arquivo" class="nav-link" data-scroll-target="#análises-por-tipo-de-arquivo">Análises por Tipo de Arquivo</a></li>
+  </ul></li>
+  <li><a href="#conclusão" id="toc-conclusão" class="nav-link" data-scroll-target="#conclusão">Conclusão</a></li>
+  <li><a href="#referências" id="toc-referências" class="nav-link" data-scroll-target="#referências">Referências</a></li>
+  <li><a href="#anexos" id="toc-anexos" class="nav-link" data-scroll-target="#anexos">Anexos</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -156,54 +221,252 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="análise-de-compressão-e-descompressão-com-lzw" class="level1">
-<h1>Análise de Compressão e Descompressão com LZW</h1>
-<section id="tabela-de-conteúdo" class="level2">
-<h2 class="anchored" data-anchor-id="tabela-de-conteúdo">Tabela de Conteúdo</h2>
-<ol type="1">
-<li><a href="#introdução">Introdução</a></li>
-<li><a href="#métodos">Métodos</a></li>
-<li><a href="#resultados">Resultados</a></li>
-<li><a href="#execução">Execução</a></li>
-<li><a href="#conclusão">Conclusão</a></li>
-</ol>
-</section>
+<section id="algoritmo-de-compressão-lzw-com-trie-compacta" class="level1">
+<h1>Algoritmo de Compressão LZW com Trie Compacta</h1>
+<p><strong>Relatório</strong></p>
+<p><strong>Gustavo Chaves Ferreira - 2022043329</strong><br>
+<strong>Júlio Guerra Domingues - 2022431280</strong></p>
+<hr>
 <section id="introdução" class="level2">
 <h2 class="anchored" data-anchor-id="introdução">Introdução</h2>
-<p>O objetivo deste trabalho é avaliar a eficiência do algoritmo LZW em diferentes tipos de arquivos (texto, binário e imagem) e tamanhos (pequeno, médio e grande). A implementação foi instrumentada para registrar métricas de desempenho como taxa de compressão, tempo de execução e uso de memória.</p>
+<p>Este relatório apresenta a implementação de um algoritmo de compressão de arquivos utilizando o método Lempel-Ziv-Welch (LZW). O foco principal é demonstrar como estruturas de dados, especificamente a trie compacta, podem ser empregadas para otimizar o processo de compressão e descompressão. Além disso, discutiremos os resultados obtidos a partir de testes realizados com diferentes tipos de arquivos, incluindo textos, imagens e arquivos binários, analisando em quais situações o algoritmo é mais ou menos eficiente.</p>
+<hr>
 </section>
-<section id="métodos" class="level2">
-<h2 class="anchored" data-anchor-id="métodos">Métodos</h2>
-<p>O LZW foi implementado em Python com suporte para: - Compressão e descompressão de arquivos. - Registro de métricas de desempenho em arquivos JSON. - Visualização dos resultados por meio de gráficos.</p>
-<p>Os tipos de arquivos testados incluem: - Textos (<code>.txt</code>). - Imagens bitmap (<code>.bmp</code>). - Arquivos binários (<code>.bin</code>).</p>
-<p>Tamanhos dos arquivos: - Pequeno (~10 KB). - Médio (~1 MB). - Grande (&gt;10 MB).</p>
+<section id="descrição-do-algoritmo-lzw" class="level2">
+<h2 class="anchored" data-anchor-id="descrição-do-algoritmo-lzw">Descrição do Algoritmo LZW</h2>
+<p>O algoritmo LZW é um método de compressão sem perdas que substitui sequências repetidas de símbolos por códigos inteiros, reduzindo assim o tamanho total do arquivo. O algoritmo opera construindo um dicionário de sequências de caracteres à medida que percorre o arquivo de entrada. Inicialmente, o dicionário contém todas as possíveis representações de um único símbolo do alfabeto utilizado (no caso, os 256 símbolos da tabela ASCII).</p>
+<section id="processo-de-compressão" class="level3">
+<h3 class="anchored" data-anchor-id="processo-de-compressão">Processo de Compressão</h3>
+<ol type="1">
+<li><strong>Inicialização:</strong> O dicionário é inicializado com todas as sequências de comprimento um possíveis (símbolos ASCII).<br>
+</li>
+<li><strong>Leitura de Símbolos:</strong> O algoritmo lê os símbolos de entrada um a um, construindo sequências concatenadas.<br>
+</li>
+<li><strong>Verificação no Dicionário:</strong> Se a sequência atual existe no dicionário, o algoritmo continua concatenando o próximo símbolo.<br>
+</li>
+<li><strong>Atualização do Dicionário:</strong>
+<ul>
+<li>Adiciona a nova sequência ao dicionário com um novo código.<br>
+</li>
+<li>Emite o código correspondente à sequência anterior.<br>
+</li>
+<li>Reinicia a sequência com o símbolo atual.<br>
+</li>
+</ul></li>
+<li><strong>Ajuste do Tamanho do Código:</strong> O algoritmo pode operar com tamanho de código fixo ou variável. Na implementação atual, utilizamos um tamanho de código variável, aumentando o número de bits conforme o dicionário cresce.</li>
+</ol>
 </section>
-<section id="resultados" class="level2">
-<h2 class="anchored" data-anchor-id="resultados">Resultados</h2>
-<p>As métricas coletadas incluem: - Taxa de compressão. - Tempo de compressão e descompressão. - Uso de memória. - Tamanho do dicionário.</p>
-<section id="gráficos" class="level3">
-<h3 class="anchored" data-anchor-id="gráficos">Gráficos</h3>
-<section id="taxa-de-compressão" class="level4">
-<h4 class="anchored" data-anchor-id="taxa-de-compressão">Taxa de Compressão</h4>
-<div class="quarto-figure quarto-figure-center">
-<figure class="figure">
-<p><img src="./results/compression_ratio.png" class="img-fluid figure-img"></p>
-<figcaption>Taxa de Compressão</figcaption>
-</figure>
-</div>
+<section id="processo-de-descompressão" class="level3">
+<h3 class="anchored" data-anchor-id="processo-de-descompressão">Processo de Descompressão</h3>
+<ol type="1">
+<li><strong>Inicialização:</strong> O dicionário é inicializado de forma semelhante à compressão.<br>
+</li>
+<li><strong>Leitura de Códigos:</strong> O algoritmo lê os códigos do arquivo comprimido.<br>
+</li>
+<li><strong>Reconstrução das Sequências:</strong> Com base nos códigos e no dicionário, o algoritmo reconstrói as sequências originais.<br>
+</li>
+<li><strong>Atualização do Dicionário:</strong> Novas sequências são adicionadas ao dicionário à medida que são descobertas.</li>
+</ol>
+<hr>
 </section>
-<section id="tempo-de-compressão" class="level4">
-<h4 class="anchored" data-anchor-id="tempo-de-compressão">Tempo de Compressão</h4>
-<p>testando:</p>
-<div id="6628b830" class="cell" data-execution_count="1">
-<div class="cell-output cell-output-stdout">
-<pre><code>Writing lzw.py</code></pre>
-</div>
-</div>
+</section>
+<section id="implementação" class="level2">
+<h2 class="anchored" data-anchor-id="implementação">Implementação</h2>
+<p>As classes <code>CompactTrie</code> e <code>CompactTrieNode</code> formam a estrutura de dados base para gerenciar prefixos binários de forma eficiente. A classe <code>TrieLZW</code> utiliza esta Trie para implementar o algoritmo de compressão LZW, otimizando armazenamento e buscas durante compressão e descompressão.</p>
+<section id="detalhes-da-implementação" class="level3">
+<h3 class="anchored" data-anchor-id="detalhes-da-implementação">Detalhes da Implementação</h3>
+<ul>
+<li><strong>Linguagem:</strong> Python.<br>
+</li>
+<li><strong>Manipulação de Bits:</strong> Utilização de strings binárias para representar sequências e códigos.<br>
+</li>
+<li><strong>Tamanho do Código:</strong> Implementação com tamanho de código variável, iniciando com 9 bits e aumentando conforme o dicionário cresce.<br>
+</li>
+<li><strong>Entrada/Saída:</strong> O programa recebe parâmetros via linha de comando, permitindo especificar arquivos de entrada, saída e configurações opcionais.<br>
+</li>
+<li><strong>Estatísticas:</strong> Durante a compressão e descompressão, estatísticas como taxa de compressão, tamanho do dicionário, tempo de execução e uso de memória são coletadas.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="principais-classes" class="level2">
+<h2 class="anchored" data-anchor-id="principais-classes">Principais Classes</h2>
+<section id="classe-compacttrienode" class="level3">
+<h3 class="anchored" data-anchor-id="classe-compacttrienode">Classe <code>CompactTrieNode</code></h3>
+<p>Essa classe representa os nós de uma Trie Compacta Binária.<br>
+- <strong>Atributos:</strong><br>
+- <code>children</code>: Uma lista de dois filhos binários (0 ou 1), inicializados como <code>None</code>.<br>
+- <code>binary_string</code>: String binária representando o prefixo associado ao nó.<br>
+- <code>value</code>: Valor armazenado no nó, utilizado para buscas e compressão.<br>
+- <code>is_leaf</code>: Indicador booleano se o nó é uma folha.<br>
+- <code>unique_id</code>: Um identificador único gerado automaticamente para o nó (usado para visualização).</p>
+</section>
+<section id="classe-compacttrie" class="level3">
+<h3 class="anchored" data-anchor-id="classe-compacttrie">Classe <code>CompactTrie</code></h3>
+<p>Implementa uma Trie Compacta Binária, otimizando buscas e inserções baseadas em prefixos binários.<br>
+- <strong>Principais Métodos:</strong><br>
+- <code>get_common_prefix_length(key1, key2)</code>: Retorna o comprimento do prefixo comum entre duas strings binárias, essencial para dividir ou inserir nós.<br>
+- <code>search(key)</code>: Busca um nó na Trie com o exato prefixo igual a <code>key</code>. Retorna o nó encontrado ou <code>None</code> se a chave não existe.<br>
+- <code>insert(key, value)</code>: Insere um novo nó com a string binária <code>key</code> e o valor <code>value</code>.<br>
+- <code>delete_key(key)</code>: Remove uma chave <code>key</code> da Trie.<br>
+- <code>visualize(filename)</code>: Gera uma visualização da Trie em formato gráfico (.png) utilizando o graphviz, para debug. Cada nó é rotulado com seu prefixo e, caso seja folha, o valor associado.</p>
+</section>
+<section id="classe-trielzw" class="level3">
+<h3 class="anchored" data-anchor-id="classe-trielzw">Classe <code>TrieLZW</code></h3>
+<p>Implementa o algoritmo LZW, utilizando uma Trie Compacta Binária como dicionário dinâmico.<br>
+- <strong>Principais Métodos:</strong><br>
+- <code>compress(file_path, compression_type, codes_max_size)</code>: Aplica a compressão LZW em um arquivo de entrada. Lida com os diferentes tipos de compressão (estática e dinâmica). O arquivo comprimido é salvo em formato binário (.bin), com cabeçalho indicando o tamanho do padding utilizado.<br>
+- <code>decompress(file_path, compression_type, original_file_name, original_file_extension, codes_max_size)</code>: Restaura o arquivo original a partir de um arquivo comprimido. Reconstrói os símbolos originais com base nos códigos comprimidos. Gerencia expansão ou reset do dicionário conforme o tipo de compressão. O arquivo descomprimido é salvo com a extensão original.</p>
+<hr>
+</section>
+</section>
+<section id="fluxo-do-algoritmo-lzw" class="level2">
+<h2 class="anchored" data-anchor-id="fluxo-do-algoritmo-lzw">Fluxo do Algoritmo LZW</h2>
+<section id="compressão" class="level3">
+<h3 class="anchored" data-anchor-id="compressão">Compressão</h3>
+<ol type="1">
+<li>Inicializa um dicionário com todas as combinações ASCII.<br>
+</li>
+<li>Lê o arquivo original byte a byte, criando sequências de símbolos.<br>
+</li>
+<li>Para cada nova sequência:
+<ul>
+<li>Se a sequência estiver no dicionário, continua adicionando símbolos.<br>
+</li>
+<li>Caso contrário, adiciona a sequência ao dicionário com um novo código.<br>
+</li>
+</ul></li>
+<li>Salva os códigos resultantes em um arquivo binário comprimido.</li>
+</ol>
+</section>
+<section id="descompressão" class="level3">
+<h3 class="anchored" data-anchor-id="descompressão">Descompressão</h3>
+<ol type="1">
+<li>Inicializa um dicionário idêntico ao da compressão.<br>
+</li>
+<li>Lê os códigos do arquivo comprimido e busca as sequências correspondentes no dicionário.<br>
+</li>
+<li>Adiciona novas sequências ao dicionário conforme os códigos são interpretados.<br>
+</li>
+<li>Reconstrói o conteúdo original e o salva no formato correspondente.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="execução" class="level2">
+<h2 class="anchored" data-anchor-id="execução">Execução</h2>
+<section id="comando-de-compressão" class="level3">
+<h3 class="anchored" data-anchor-id="comando-de-compressão">Comando de Compressão</h3>
+<div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> lzw.py compress <span class="op">&lt;</span>arquivo_a_ser_comprimido.<span class="pp">*</span><span class="op">&gt;</span> <span class="op">&lt;</span>arquivo_comprimido.bin<span class="op">&gt;</span> --stats-file <span class="op">&lt;</span>arquivo_com_estatisticas.json<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="descrição" class="level4">
+<h4 class="anchored" data-anchor-id="descrição">Descrição</h4>
+<ul>
+<li><strong><code>compress</code></strong>: Indica que o programa realizará a compressão do arquivo.<br>
+</li>
+<li><strong><code>&lt;arquivo_a_ser_comprimido.*&gt;</code></strong>: Caminho do arquivo de entrada que será comprimido.<br>
+</li>
+<li><strong><code>&lt;arquivo_comprimido.bin&gt;</code></strong>: Caminho onde o arquivo comprimido será salvo.<br>
+</li>
+<li><strong><code>--stats-file &lt;arquivo_com_estatisticas.json&gt;</code></strong>: (Opcional) Especifica o arquivo JSON onde as estatísticas da compressão, como tamanho inicial e comprimido, serão salvas.</li>
+</ul>
+</section>
+</section>
+<section id="comando-de-descompressão" class="level3">
+<h3 class="anchored" data-anchor-id="comando-de-descompressão">Comando de Descompressão</h3>
+<div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python3</span> lzw.py decompress <span class="op">&lt;</span>arquivo_comprimido.bin<span class="op">&gt;</span> <span class="op">&lt;</span>arquivo_descomprimido.<span class="pp">*</span><span class="op">&gt;</span> --max-bits <span class="op">&lt;&gt;</span> --stats-file <span class="op">&lt;</span>arquivo_com_estatísticas.json<span class="op">&gt;</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<section id="descrição-1" class="level4">
+<h4 class="anchored" data-anchor-id="descrição-1">Descrição</h4>
+<ul>
+<li><strong><code>decompress</code></strong>: Indica que o programa realizará a descompressão do arquivo.<br>
+</li>
+<li><strong><code>&lt;arquivo_a_ser_descomprimido.bin&gt;</code></strong>: Caminho do arquivo comprimido que será descomprimido.<br>
+</li>
+<li><strong><code>&lt;arquivo_descomprimido.*&gt;</code></strong>: Caminho onde o arquivo descomprimido será salvo.<br>
+</li>
+<li><strong><code>--max-bits &lt;&gt;</code></strong>: Define o tamanho máximo dos códigos (em bits) utilizados na descompressão.<br>
+</li>
+<li><strong><code>--stats-file &lt;arquivo_com_estatísticas.json&gt;</code></strong>: (Opcional) Especifica o arquivo JSON onde as estatísticas da descompressão, como tamanho do arquivo comprimido e descomprimido, serão salvas.</li>
+</ul>
+</section>
+</section>
+</section>
+<section id="testes" class="level2">
+<h2 class="anchored" data-anchor-id="testes">Testes</h2>
+<section id="métodos" class="level3">
+<h3 class="anchored" data-anchor-id="métodos">Métodos</h3>
+<p>O código foi instrumentado para monitorar os tempos de compressão e descompressão, razão de compressão, tamanho do dicionário e uso de memória. Para cada arquivo descomprimido, foi verificada a integridade a partir da comparação binária, para assegurar que os dados originais foram recuperados sem perdas.</p>
+<p>Tais variáveis foram avaliadas em arquivos de diferentes tipos e tamanhos, de forma a verificar o desempenho do algoritmo em diferentes cenários. Foram realizados testes com arquivos de texto (.txt), imagem (.bmp, .pgm), áudio (.wav) e binários (.bin). Outros formatos comuns de arquivos, como .jpg, .png e .mpg, não foram testados pois já apresentam compressão (com ou sem perdas), o que influenciaria no comportamento do programa e prejudicaria as análises.</p>
+<hr>
+</section>
+</section>
+<section id="resultados-e-discussão" class="level2">
+<h2 class="anchored" data-anchor-id="resultados-e-discussão">Resultados e Discussão</h2>
+<section id="a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada." class="level3">
+<h3 class="anchored" data-anchor-id="a-eficiência-do-algoritmo-lzw-é-altamente-dependente-das-características-dos-dados-de-entrada.">A eficiência do algoritmo LZW é altamente dependente das características dos dados de entrada.</h3>
+<p>A seguir, discutimos como diferentes fatores influenciam a taxa de compressão em textos, imagens e arquivos binários.</p>
+<p>Os testes foram realizados em ambiente Colab, para maior compatibilidade, e podem ser acessados na raiz do repositório no GitHub ou pelo link:</p>
+<section id="tabelas-resumidas" class="level4">
+<h4 class="anchored" data-anchor-id="tabelas-resumidas">Tabelas Resumidas</h4>
+<p><strong>Compressão:</strong></p>
+<p><strong>Descompressão:</strong></p>
+<hr>
+</section>
+</section>
+<section id="análises-por-tipo-de-arquivo" class="level3">
+<h3 class="anchored" data-anchor-id="análises-por-tipo-de-arquivo">Análises por Tipo de Arquivo</h3>
+<section id="textos" class="level4">
+<h4 class="anchored" data-anchor-id="textos">Textos</h4>
+<p>Textos com muitas repetições, como documentos com vocabulário limitado ou formatos estruturados (como XML ou JSON), tendem a ser mais compressíveis. Isso ocorre porque o LZW aproveita sequências repetidas para construir um dicionário mais eficiente. Textos ricos em vocabulário, como obras literárias, têm menos repetições e, portanto, menor taxa de compressão.</p>
+</section>
+<section id="imagens" class="level4">
+<h4 class="anchored" data-anchor-id="imagens">Imagens</h4>
+<p>Imagens com áreas grandes de cor uniforme, como gráficos ou desenhos animados, são mais compressíveis. Já imagens fotográficas, com variação de cores e detalhes finos, oferecem menos oportunidades para compressão. Imagens em escala de cinza ou monocromáticas têm menos informações por pixel do que imagens coloridas, resultando em maior taxa de compressão.</p>
+<p>Imagens já comprimidas em formatos como JPEG ou PNG (que usam compressão com perdas e sem perdas, respectivamente) podem não ser eficazmente comprimidas novamente pelo LZW.</p>
+</section>
+<section id="áudio" class="level4">
+<h4 class="anchored" data-anchor-id="áudio">Áudio</h4>
+<p>A compressão de arquivos WAV utilizando o algoritmo LZW é influenciada principalmente pela redundância dos dados de áudio, parâmetros de gravação como taxa de amostragem e profundidade de bits, complexidade do conteúdo de áudio, e configurações do algoritmo LZW. Arquivos WAV com alta redundância e padrões repetitivos são mais eficazmente comprimidos pelo LZW, enquanto aqueles com alta entropia e variações rápidas apresentarão menores taxas de compressão.</p>
+</section>
+<section id="arquivos-binários" class="level4">
+<h4 class="anchored" data-anchor-id="arquivos-binários">Arquivos Binários</h4>
+<p>Arquivos binários com dados aleatórios ou já comprimidos (como arquivos ZIP ou executáveis) possuem alta entropia, o que torna a compressão adicional ineficiente. Se o arquivo binário contém estruturas repetitivas ou padrões previsíveis, o LZW pode obter alguma compressão. Arquivos binários que representam dados estruturados (por exemplo, registros com campos fixos) podem ser mais suscetíveis à compressão.</p>
+</section>
+<section id="outras-análises" class="level4">
+<h4 class="anchored" data-anchor-id="outras-análises">Outras Análises</h4>
+<p>A taxa de compressão tende a estabilizar conforme o dicionário cresce e o algoritmo encontra sequências repetidas mais longas. Em arquivos com alta redundância, a taxa de compressão inicial é mais acentuada. O crescimento do dicionário é mais rápido em arquivos com muitos padrões únicos, o que pode afetar o desempenho em termos de memória.</p>
+<hr>
+</section>
+</section>
+</section>
+<section id="conclusão" class="level2">
+<h2 class="anchored" data-anchor-id="conclusão">Conclusão</h2>
+<p>A implementação do algoritmo LZW utilizando uma trie compacta demonstrou-se eficaz na compressão de arquivos de diferentes tipos. A estrutura de dados escolhida permitiu otimizar as operações críticas do algoritmo, resultando em tempos de execução aceitáveis e uso de memória controlado.</p>
+<p>Os testes realizados confirmaram a correta funcionalidade do algoritmo, preservando a integridade dos dados após a compressão e descompressão. Observou-se que a eficiência da compressão varia conforme o tipo de arquivo e suas características intrínsecas, sendo mais eficaz em dados com alta redundância.</p>
+<p>Enquanto métodos como o LZW oferecem uma base sólida e flexibilidade, o avanço contínuo na tecnologia de compressão tem permitido o desenvolvimento de soluções mais especializadas e eficientes para domínios específicos. Assim, a escolha informada do método de compressão não apenas maximiza a eficiência do armazenamento, mas também preserva a integridade e qualidade dos dados de maneira mais eficaz.</p>
+<hr>
+</section>
+<section id="referências" class="level2">
+<h2 class="anchored" data-anchor-id="referências">Referências</h2>
+<ol type="1">
+<li>Lempel A, Ziv J. Compression of Individual Sequences via Variable-Rate Coding. IEEE Transactions on Information Theory, 1978.<br>
+</li>
+<li><a href="https://www2.cs.uic.edu/~i101/SoundFiles/">CS Sound Files</a><br>
+</li>
+<li><a href="https://web.mit.edu/6.02/www/s2012/handouts/3.pdf">MIT Lecture Notes</a><br>
+</li>
+<li><a href="https://www.davidsalomon.name/DC4advertis/DComp4Ad.html">David Salomon - Data Compression</a></li>
+</ol>
+<hr>
+</section>
+<section id="anexos" class="level2">
+<h2 class="anchored" data-anchor-id="anexos">Anexos</h2>
+<ul>
+<li><strong>Código Fonte:</strong> Disponível no GitHub.<br>
+</li>
+<li><strong>Estatísticas Detalhadas:</strong> Os arquivos utilizados nos testes e JSON com dados completos das execuções estão disponíveis na pasta <code>/tests</code>.</li>
+</ul>
 
 
-</section>
-</section>
 </section>
 </section>
 
